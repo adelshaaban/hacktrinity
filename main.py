@@ -5,6 +5,9 @@ import uuid
 origins = [
     "http://localhost",
     "http://localhost:8080",
+    "http://172.20.10.2",
+    "http://172.20.10.2:5173",
+    "*"
 ]
 
 
@@ -34,4 +37,5 @@ async def create_upload_file(file: UploadFile = File(...)):
     with open(f"{ImagePath}{file.filename}", "wb") as f:
         f.write(contents)
 
-    return {"filename": file.filename}
+
+    return {"file-response": file}
