@@ -1,7 +1,7 @@
 from fastapi import FastAPI,UploadFile,File
 from fastapi.middleware.cors import CORSMiddleware
 import os
-
+from work_bet_slow import Ergonomy
 from fastapi.responses import FileResponse
 
 origins = [
@@ -15,7 +15,7 @@ origins = [
 
 
 ImagePath = "images/"
-
+OutputPath = "edited_video/"
 app = FastAPI()
 
 app.add_middleware(
@@ -39,10 +39,10 @@ async def create_upload_file(file: UploadFile = File(...)):
     with open(f"{ImagePath}{file.filename}", "wb") as f:
         f.write(contents)
 
+    output = Ergonomy.process_video(f'images/{file.filename}',filename=file.filename)
+    return {"file_response": file,"file_url": f"http://192.168.137.13:8000/{output}"}
 
-    return {"file_response": file,"file_url": f"http://172.20.10.3:8000/images/{file.filename}"}
-
-@app.get("/images/{filename}")
+@app.get("/edited_video/{filename}")
 async def get_image(filename: str):
-    return FileResponse(os.path.join(ImagePath, filename))
+    return FileResponse(os.path.join(OutputPath, filename))
 

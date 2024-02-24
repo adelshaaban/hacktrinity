@@ -1,4 +1,6 @@
 import cv2
+import os
+from fastapi.responses import FileResponse
 import mediapipe as mp
 import numpy as np
 
@@ -6,8 +8,6 @@ import numpy as np
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose(static_image_mode=False, model_complexity=1)
 mp_drawing_styles = mp.solutions.drawing_styles
-
-# Drawing utility
 mp_drawing = mp.solutions.drawing_utils
 
 # Define ergonomics analysis class
@@ -16,7 +16,6 @@ class Ergonomy:
         self.trunk_angle_threshold = 10  # Angle in degrees for deviation from vertical
 
     def calculate_angle(self, point1, point2, point3):
-        #point 1 = shoulder, point 2 = hip, point 3 = vertical line
         """Calculate angle between three points."""
         vector1 = point1 - point2
         vector2 = point3 - point2
@@ -40,53 +39,68 @@ class Ergonomy:
 
         posture = "Bad" if abs(90 - trunk_angle) <= self.trunk_angle_threshold else "Good"
         return posture, trunk_angle
+    
+    def process_video(videofile, filename):
+        # Open the video file
+        cap = cv2.VideoCapture(videofile)
 
-# Open the video file
-cap = cv2.VideoCapture('4.MOV')
+        # Check if the video opened successfully
+        if not cap.isOpened():
+            print("Error: Could not open video.")
+            exit()
 
-# Check if the video opened successfully
-if not cap.isOpened():
-    print("Error: Could not open video.")
-    exit()
+        # Create an instance of the Ergonomy class
+        ergonomy = Ergonomy()
 
-# Create an instance of the Ergonomy class
-ergonomy = Ergonomy()
+        # Initialize variables for video output
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = int(cap.get(cv2.CAP_PROP_FPS))
 
-# Read frames from the video
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        break
+        # Define the codec and create VideoWriter object
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        output_video_path = f'edited_video/{filename}.avi'
+        output_video = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
 
-    # Convert the frame to RGB
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Read frames from the video
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-    # Process the frame and detect the pose
-    results = pose.process(frame_rgb)
+            # Convert the frame to RGB
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    # Check if any poses are detected
-    if results.pose_landmarks:
-        # Draw pose landmarks on the frame
-        mp_drawing.draw_landmarks(
-            frame,
-            results.pose_landmarks,
-            mp_pose.POSE_CONNECTIONS,
-            landmark_drawing_spec = mp_drawing_styles.get_default_pose_landmarks_style())
+            # Process the frame and detect the pose
+            results = pose.process(frame_rgb)
 
-        # Assess the posture
-        posture, trunk_angle = ergonomy.assess_posture(results.pose_landmarks)
+            # Check if any poses are detected
+            if results.pose_landmarks:
+                # Draw pose landmarks on the frame
+                mp_drawing.draw_landmarks(
+                    frame,
+                    results.pose_landmarks,
+                    mp_pose.POSE_CONNECTIONS,
+                    landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
 
-        # Provide feedback on the frame
-        cv2.putText(frame, f'Posture: {posture}, Trunk Angle: {trunk_angle:.2f}', (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                # Assess the posture
+                posture, trunk_angle = ergonomy.assess_posture(results.pose_landmarks)
 
-    # Display the frame
-    cv2.imshow('Posture Analysis', frame)
+                # Provide feedback on the frame
+                cv2.putText(frame, f'Posture: {posture}, Trunk Angle: {trunk_angle:.2f}', (10, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
-    # Press 'q' to exit the loop
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+            # Write the frame to the output video
+            output_video.write(frame)
 
-# Release the video capture object and close windows
-cap.release()
-cv2.destroyAllWindows()
+        # Release the video capture object and video writer
+        cap.release()
+        output_video.release()
+        cv2.destroyAllWindows()
+
+        # Convert the AVI file to MP4 using FFmpeg
+        output_mp4_path = f'edited_video/{filename}.mp4'
+        os.system(f'ffmpeg -i {output_video_path} -c:v libx264 -preset slow -crf 22 -c:a aac -b:a 192k {output_mp4_path}')
+
+        # Return the path to the processed MP4 video file
+        return output_mp4_path
