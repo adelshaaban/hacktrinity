@@ -1,6 +1,8 @@
 from fastapi import FastAPI,UploadFile,File
 from fastapi.middleware.cors import CORSMiddleware
-import uuid
+import os
+
+from fastapi.responses import FileResponse
 
 origins = [
     "http://localhost",
@@ -38,4 +40,9 @@ async def create_upload_file(file: UploadFile = File(...)):
         f.write(contents)
 
 
-    return {"file-response": file}
+    return {"file_response": file,"file_url": f"http://172.20.10.3:8000/images/{file.filename}"}
+
+@app.get("/images/{filename}")
+async def get_image(filename: str):
+    return FileResponse(os.path.join(ImagePath, filename))
+
