@@ -40,8 +40,8 @@ async def create_upload_file(file: UploadFile = File(...)):
     with open(f"{ImagePath}{file.filename}", "wb") as f:
         f.write(contents)
 
-    output = Ergonomy.process_video(f'images/{file.filename}',filename=uuid.uuid4())
-    return {"file_response": file,"file_url": f"http://192.168.137.13:8000/{output}"}
+    output,verdict,result = Ergonomy.process_video(f'images/{file.filename}',filename=uuid.uuid4())
+    return {"file_response": file,"file_url": f"http://192.168.137.13:8000/{output}","verdict":verdict,"results":result}
 
 @app.get("/edited_video/{filename}")
 async def get_image(filename: str):

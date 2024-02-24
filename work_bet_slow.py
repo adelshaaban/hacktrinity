@@ -41,6 +41,8 @@ class Ergonomy:
         return posture, trunk_angle
     
     def process_video(videofile, filename):
+        result = []
+        result.clear()
         # Open the video file
         cap = cv2.VideoCapture(videofile)
 
@@ -86,6 +88,7 @@ class Ergonomy:
                 # Assess the posture
                 posture, trunk_angle = ergonomy.assess_posture(results.pose_landmarks)
 
+                result.append(posture)
                 # Provide feedback on the frame
                 cv2.putText(frame, f'Posture: {posture}, Trunk Angle: {trunk_angle:.2f}', (10, 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
@@ -101,6 +104,8 @@ class Ergonomy:
         # Convert the AVI file to MP4 using FFmpeg
         output_mp4_path = f'edited_video/{filename}.mp4'
         os.system(f'ffmpeg -i {output_video_path} -c:v libx264 -preset slow -crf 22 -c:a aac -b:a 192k {output_mp4_path}')
-
+        verdict = 0
+        if len(result) > 0:
+            verdict = (result.count("Good")/len(result)) * 100
         # Return the path to the processed MP4 video file
-        return output_mp4_path
+        return output_mp4_path,verdict,result
