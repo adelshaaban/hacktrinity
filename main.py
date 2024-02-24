@@ -1,3 +1,4 @@
+import uuid
 from fastapi import FastAPI,UploadFile,File
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -39,7 +40,7 @@ async def create_upload_file(file: UploadFile = File(...)):
     with open(f"{ImagePath}{file.filename}", "wb") as f:
         f.write(contents)
 
-    output = Ergonomy.process_video(f'images/{file.filename}',filename=file.filename)
+    output = Ergonomy.process_video(f'images/{file.filename}',filename=uuid.uuid4())
     return {"file_response": file,"file_url": f"http://192.168.137.13:8000/{output}"}
 
 @app.get("/edited_video/{filename}")
