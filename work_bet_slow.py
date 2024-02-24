@@ -4,7 +4,8 @@ import numpy as np
 
 # Initialize MediaPipe Pose.
 mp_pose = mp.solutions.pose
-pose = mp_pose.Pose(static_image_mode=False, model_complexity=2)
+pose = mp_pose.Pose(static_image_mode=False, model_complexity=1)
+mp_drawing_styles = mp.solutions.drawing_styles
 
 # Drawing utility
 mp_drawing = mp.solutions.drawing_utils
@@ -15,6 +16,7 @@ class Ergonomy:
         self.trunk_angle_threshold = 10  # Angle in degrees for deviation from vertical
 
     def calculate_angle(self, point1, point2, point3):
+        #point 1 = shoulder, point 2 = hip, point 3 = vertical line
         """Calculate angle between three points."""
         vector1 = point1 - point2
         vector2 = point3 - point2
@@ -40,7 +42,7 @@ class Ergonomy:
         return posture, trunk_angle
 
 # Open the video file
-cap = cv2.VideoCapture('3.MOV')
+cap = cv2.VideoCapture('4.MOV')
 
 # Check if the video opened successfully
 if not cap.isOpened():
@@ -66,9 +68,10 @@ while cap.isOpened():
     if results.pose_landmarks:
         # Draw pose landmarks on the frame
         mp_drawing.draw_landmarks(
-            frame_rgb,
+            frame,
             results.pose_landmarks,
-            mp_pose.POSE_CONNECTIONS)
+            mp_pose.POSE_CONNECTIONS,
+            landmark_drawing_spec = mp_drawing_styles.get_default_pose_landmarks_style())
 
         # Assess the posture
         posture, trunk_angle = ergonomy.assess_posture(results.pose_landmarks)
