@@ -37,7 +37,7 @@ class Ergonomy:
         vertical_line = np.array([hip[0], 0])
         trunk_angle = self.calculate_angle(shoulder, hip, vertical_line)
 
-        posture = "Bad" if abs(90 - trunk_angle) <= self.trunk_angle_threshold else "Good"
+        posture = "Bad" if abs(80 - trunk_angle) <= self.trunk_angle_threshold else "Good"
         return posture, trunk_angle
     
     def process_video(videofile, filename):
@@ -89,10 +89,26 @@ class Ergonomy:
                 posture, trunk_angle = ergonomy.assess_posture(results.pose_landmarks)
 
                 result.append(posture)
-                # Provide feedback on the frame
-                cv2.putText(frame, f'Posture: {posture}, Trunk Angle: {trunk_angle:.2f}', (10, 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
+                if posture == "Good":
+                    text_color = (0,255,0)
+                else:
+                    text_color =(0,0,255)
+                
+                posture_position = (10,50)
+                trunk_angle_position = (10,150)
+                # Provide feedback on the frame
+                # cv2.putText(frame, f'Posture: {posture}, Trunk Angle: {trunk_angle:.2f}', (10, 30),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                
+
+
+            cv2.putText(frame, f'Posture: {posture}', posture_position,
+                        cv2.FONT_HERSHEY_SIMPLEX, 2, text_color, 5, cv2.LINE_AA)
+
+            cv2.putText(frame, f'Trunk Angle: {trunk_angle:.2f}', trunk_angle_position,
+                        cv2.FONT_HERSHEY_SIMPLEX, 2, text_color, 5, cv2.LINE_AA) 
+            
             # Write the frame to the output video
             output_video.write(frame)
 
