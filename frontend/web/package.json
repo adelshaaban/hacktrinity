@@ -14,8 +14,11 @@
     "@emotion/styled": "^11.11.0",
     "@mui/material": "^5.15.10",
     "axios": "^1.6.7",
+    "particles.js": "^2.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "three": "^0.161.0",
+    "vanta": "^0.5.24"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",

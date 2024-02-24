@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, CircularProgress, LinearProgress, Typography } from '@mui/material';
+import { Button, CircularProgress, LinearProgress, Typography, Input } from '@mui/material';
 import axios from 'axios';
 
 function ImageUpload() {
@@ -19,7 +19,9 @@ function ImageUpload() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await axios.post('http://172.20.10.3:8000/api', formData, {
+      console.log(`Connecting to ${import.meta.env.VITE_API_URL}`)
+
+      const response = await axios.post(import.meta.env.VITE_API_URL, formData, {
         onUploadProgress: (progressEvent) => {
           const progress = Math.round((progressEvent.loaded / progressEvent.total) * 100);
           setUploadProgress(progress);
@@ -33,15 +35,17 @@ function ImageUpload() {
       console.log(`Got content type of file_response = ${contentType}`)
       if (contentType.startsWith('image')) {
         // If the response is an image, display it
-        console.log(response.data.file_url)
+        console.log(`File URL = ${response.data.file_url}`)
+        setVideoResponse(null);
         setImageResponse(response.data.file_url);
       } else if (contentType.startsWith('video')) {
-        console.log(response.data.file_url)
+        console.log(`File URL = ${response.data.file_url}`)
+        setImageResponse(null);
         setVideoResponse(response.data.file_url);
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-    } finally {
+    } finally { 
       setIsUploading(false);
     }
   };
@@ -49,18 +53,16 @@ function ImageUpload() {
   return (
     <div>
       <div style={{ textAlign: 'center', marginTop: 20 }}>
-        <Typography variant="h5">Power Pulse</Typography>
-        <Typography variant="body1">
+        <Typography variant="h5">
           Upload an image or a video to detect if an alert should be sent for bad posture detection!
         </Typography>
       </div>
       <div style={{ textAlign: 'center', marginTop: 20 }}>
-        <input
+        <Input
           type="file"
           onChange={handleFileChange}
-          style={{
-            color: 'white',
-          }}
+          disableUnderline // Removes the default underline style
+          style={{ color: 'white' }} // Hide the default file input
         />
         <Button
           variant="contained"
@@ -72,7 +74,7 @@ function ImageUpload() {
           Upload
         </Button>
         {isUploading && (
-          <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 20, maxWidth: 600, margin: '0 auto' }}>
             <CircularProgress size={24} thickness={4} />
             <Typography variant="body1" style={{ marginLeft: 10 }}>
               Uploading...
@@ -80,7 +82,7 @@ function ImageUpload() {
           </div>
         )}
         {uploadProgress > 0 && (
-          <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 20, maxWidth: 600, margin: '0 auto' }}>
             <LinearProgress variant="determinate" value={uploadProgress} />
             <Typography variant="body1" style={{ marginTop: 5 }}>
               {uploadProgress}%
